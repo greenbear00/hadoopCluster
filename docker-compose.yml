@@ -1,0 +1,278 @@
+version: "3.7"
+
+services:
+
+  ### [hadoop] ###
+  namenode:
+    image: hadoop-namenode:3.1.2
+    build: namenode
+    container_name: namenode
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - namenode:/hadoop/dfs/name
+      - ./tmp:/tmp_test
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  datanode1:
+    image: hadoop-datanode:3.1.2
+    build: datanode
+    container_name: datanode1
+    restart: always
+    ports:
+      - 19864:9864
+    volumes:
+      - datanode1:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  datanode2:
+    image: hadoop-datanode:3.1.2
+    build: datanode
+    container_name: datanode2
+    restart: always
+    ports:
+      - 19865:9864
+    volumes:
+      - datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  datanode3:
+    image: hadoop-datanode:3.1.2
+    build: datanode
+    container_name: datanode3
+    restart: always
+    ports:
+      - 19866:9864
+    volumes:
+      - datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+  
+  resourcemanager:
+    image: hadoop-resourcemanager:3.1.2
+    build: resourcemanager
+    container_name: resourcemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864"
+    ports:
+      - 8088:8088
+      - 8032:8032
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  nodemanager1:
+    image: hadoop-nodemanager:3.1.2
+    container_name: nodemanager1
+    build: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 18042:8042
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  nodemanager2:
+    image: hadoop-nodemanager:3.1.2
+    container_name: nodemanager2
+    build: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 18043:8042
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  nodemanager3:
+    image: hadoop-nodemanager:3.1.2
+    container_name: nodemanager3
+    build: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 18044:8042
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+  
+  historyserver:
+    image: hadoop-historyserver:3.1.2
+    container_name: historyserver
+    build: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 8188:8188
+    volumes:
+      - historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - elastic
+
+  ### [hive] ###
+  hive-metastore-mysql:
+    image: mysql:8.0.21
+    container_name: hive-metastore-mysql
+    hostname: hive-metastore-mysql
+    command: --default-authentication-plugin=mysql_native_password --lower-case-table-names=1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: metastore
+      MYSQL_USER: hive
+      MYSQL_PASSWORD: hive
+    ports:
+      - "3306:3306"
+    security_opt:
+      - seccomp:unconfined
+    # networks:
+    #   - elastic
+
+  hive-metastore:
+    image: hadoop-hive:3.2.1
+    container_name: hive-metastore
+    build: hive
+    restart: always
+    hostname: hive-metastore
+    depends_on:
+      - hive-metastore-mysql
+    env_file:
+      - ./hadoop.env
+      - ./hive.env
+    # command: sh -c "./../run.sh metastore"
+    command: ['./run.sh', 'metastore']
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-mysql:3306"
+    ports:
+      - "9083:9083"
+    # networks:
+    #   - elastic
+
+  hive-server:
+    image: hadoop-hive:3.2.1
+    container_name: hive-server
+    build: hive
+    restart: always
+    hostname: hive-server
+    depends_on:
+      - resourcemanager
+      - nodemanager1
+      - nodemanager2
+      - nodemanager3
+      - historyserver
+      - hive-metastore
+    volumes:
+      - ./hive/dummy_data:/opt/dummy_data
+    env_file:
+      - ./hadoop.env
+      - ./hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 historyserver:8188 hive-metastore:9083"
+      DUMMY_DATA: 1
+    ports:
+      - "10000:10000"
+    # networks:
+    #   - elastic
+  # hive-metastore-postgres:
+  #   image: postgres
+  #   container_name: hive-metastore-postgres
+  #   restart: always
+  #   hostname: hive-metastore-postgres
+  #   environment:
+  #     POSTGRES_DB: metastore
+  #     POSTGRES_USER: hive
+  #     POSTGRES_PASSWORD: hive
+  #   ports:
+  #     - 5432:5432
+  #   volumes: 
+  #     - hive-metastore-postgres:/var/lib/postgresql/data
+
+  # hive-metastore:
+  #   image: hadoop-hive:3.1.2
+  #   container_name: hive-metastore
+  #   build: hive
+  #   restart: always
+  #   hostname: hive-metastore
+  #   depends_on:
+  #     - hive-metastore-postgres
+  #   env_file:
+  #     - ./hadoop.env
+  #     - ./hive.env
+  #   # command: sh -c "./../run.sh metastore"
+  #   command: ['./run.sh', 'metastore']
+  #   environment:
+  #     SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-postgres:5432"
+  #   ports:
+  #     - "9083:9083"
+
+  # hive-server:
+  #   image: hadoop-hive:3.1.2
+  #   container_name: hive-server
+  #   build: hive
+  #   restart: always
+  #   hostname: hive-server
+  #   depends_on:
+  #     - resourcemanager
+  #     - nodemanager1
+  #     - nodemanager2
+  #     - nodemanager3
+  #     - historyserver
+  #     - hive-metastore
+  #   volumes:
+  #     - ./hive/dummy_data:/opt/dummy_data
+  #   env_file:
+  #     - ./hadoop.env
+  #     - ./hive.env
+  #   environment:
+  #     HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+  #     SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 historyserver:8188 hive-metastore:9083"
+  #     DUMMY_DATA: 1
+  #   ports:
+  #     - "10000:10000"
+
+
+volumes:
+  namenode:
+  datanode1:
+  datanode2:
+  datanode3:
+  historyserver:
+  hive-metastore-postgres:
+
+networks:
+  elastic:
+    driver: bridge
+  
