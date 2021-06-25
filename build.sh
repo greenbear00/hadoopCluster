@@ -9,8 +9,7 @@ if [[ $variable2 = *"build"* ]]; then
   echo "input argument [stop | start] [nifi=#number]"
 elif [[ $variable2 = *"stop"* ]]; then
   echo "stop"
-  docker-compose -f docker-compose-was.yml down
-  docker-compose -f docker-compose-hadoop.yml down
+  docker-compose down
 else
   echo "start...."
 
@@ -30,13 +29,12 @@ else
   docker build -t hadoop-nodemanager:$VERSION nodemanager/.
   echo -e "\ndocker build -t hadoop-historyserver:$VERSION historyserver/."
   docker build -t hadoop-historyserver:$VERSION historyserver/.
-  # echo -e "\n docker build -t hadoop-hive:$HIVE_VERSION hive/."
-  # docker build -t hadoop-hive:$HIVE_VERSION hive/.
+  echo -e "\n docker build -t hadoop-hive:$HIVE_VERSION hive/."
+  docker build -t hadoop-hive:$HIVE_VERSION hive/.
 
   
   # echo "docker-compose up --scale nifi=3 -d --build"
   # docker-compose up --scale nifi=3 -d --build
   echo "docker-compose up -d --build"
-  docker-compose -f docker-compose-was.yml up -d --build
-  docker-compose -f docker-compose-hadoop.yml up -d
+  docker-compose up -d
 fi

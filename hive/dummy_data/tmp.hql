@@ -57,22 +57,22 @@ INSERT INTO TABLE tmp2.hourly_employee PARTITION  (year=2020, month=04, day=03, 
 
 
 
--- csv 파일을 load해서 partition해서 테이블에 집어넣기
-create external table if not exists emp(
-    eid int, name String, salary String, destination String, 
-    year int, month int, day int
-    ) 
-    row format delimited fields terminated by ',' 
-    stored as textfile location '/tmp/emp/' 
-    tblproperties("skip.header.line.count"="1");
+-- -- csv 파일을 load해서 partition해서 테이블에 집어넣기
+-- create external table if not exists emp(
+--     eid int, name String, salary String, destination String, 
+--     year int, month int, day int
+--     ) 
+--     row format delimited fields terminated by ',' 
+--     stored as textfile location '/tmp/emp/' 
+--     tblproperties("skip.header.line.count"="1");
 
-select * from emp;
+-- select * from emp;
 
-create table IF NOT EXISTS tmp2.emp_part( 
-    eid int, name String, salary String, destination String) 
-    partitioned by (year int, month int, day int) 
-    row format delimited fields terminated by ',' stored as parquet;
+-- create table IF NOT EXISTS tmp2.emp_part( 
+--     eid int, name String, salary String, destination String) 
+--     partitioned by (year int, month int, day int) 
+--     row format delimited fields terminated by ',' stored as parquet;
 
-set hive.exec.dynamic.partition.mode=nonstrict;
+-- set hive.exec.dynamic.partition.mode=nonstrict;
 
-insert overwrite table tmp2.emp_part partition (year, month, day) select eid, name, salary, destination, year, month, day from emp;;
+-- insert overwrite table tmp2.emp_part partition (year, month, day) select eid, name, salary, destination, year, month, day from emp;;

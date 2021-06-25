@@ -1,98 +1,22 @@
-# 구성
-1. flask+uwsgi+nginx를 붙임
-    - request --[http://localhost:8081]--> nginx --[8081:5000]--> flask+uwsgi [app]
-2 logger 수집
-    - flask 로그와 nginx 로그를 logstash를 통해서 elastic으로 전송
-3. nifi 적용
-    - nifi로 RDB 내용과 logger를 hadoop에 전송
-4. hadoop 구성
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/big-data-europe/Lobby)
 
+# Changes
 
-## logger 셋팅
-log 셋팅(nginx와 flask의 log를 logstash를 통하여 elastic으로 전송)
-- logger에 대한 logstash pipleline관련하여 grok 문법에 대한 simulate는 kibana에서 [DevTools]->[Grok Debugger]에서 시뮬레이션 할 수 있음
-    - logstash grok 문법 참조: https://github.com/logstash-plugins/logstash-patterns-core/blob/v2.0.5/patterns/grok-patterns#L86
-- flask에서 내부 logging과 logstash로 log를 전송하게끔 구성함 
-    - 실제 flask 내부에서 logstash.TCPLogstashHandler를 통해서 logstash 컨테이너에 log를 전송하게끔 하였음
-    - (logstash pipeline관련 내용) .elk/logstash/pipeline/flask_log.conf
-    - 로그 예:
-        ```
-        [flask 로그]
-            2021-06-11 01:50:15,033 - web_stream - 192.168.176.1 - GET - OS - requested http://localhost:8080/ - INFO in log - session = no
-            2021-06-22 06:34:47,821 - werkzeug - 192.168.240.1 - GET - OS - requested http://localhost:8080/ - INFO in log - session = None
+change from debian:9 to centos:7 (2021.03.30)
 
+datanode(scale out) -> 3 datanode
++ local test를 위해 dfs.replication=1로 설정
 
-        [logstash 로그]
-            {
-                "@version" => "1",
-                "path" => "log",
-                "method" => "GET",
-                "loglevel" => "INFO",
-                "host" => "flask.simpleweb_elastic",
-                "timestamp" => "2021-06-11 01:50:15,018",
-                "device" => "OS",
-                "requested_url" => "http://localhost:8080/",
-                "port" => 56660,
-                "message" => "session = no",
-                "@timestamp" => 2021-06-11T01:50:15.018Z,
-                "clientip" => "192.168.176.1"
-            }
-        ```
-- nginx의 access.log를 logstash로 전송하게끔 구성 (.elk/logstash/pipeline/flask_log.conf)
-    - docker-compose 내에서 nginx의 /var/log/nginx 디렉토리에 있는 access.log 를 mount하여 logstash에서 file로 write하게끔 구성 
-    - (logstash pipeline관련 내용) .elk/logstash/pipeline/simple_web_log.conf
-    - 로그 예:
-        ```
-        [nginx access.log]
-            192.168.176.1 - - [11/Jun/2021:01:50:15 +0000] "GET / HTTP/1.1" 200 280 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36" "-"
+nodemanager(scale out) -> 3 nodemanager
++ 이슈 발생: local machine의 메모리가 16GB여서 nodemanager의 memory 설정 낮춤
+  + YARN_CONF_yarn_nodemanager_resource_memory___mb=4096
+  + YARN_CONF_yarn_nodemanager_resource_cpu___vcores=4
+  + MAPRED_CONF_mapreduce_map_memory_mb=4096
+10  + MAPRED_CONF_mapreduce_reduce_memory_mb=4096
 
-        [logstash]
-            {
-                "tags" => [
-                    [0] "_dateparsefailure",
-                    [1] "_geoip_lookup_failure"
-                ],
-                "agents" => {
-                    "build" => "",
-                    "os" => "Windows",
-                    "patch" => "4472",
-                    "minor" => "0",
-                    "device" => "Other",
-                    "os_name" => "Windows",
-                    "major" => "91",
-                    "name" => "Chrome"
-                },
-                "agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
-                "@version" => "1",
-                "http_version" => "1.1",
-                "geoip" => {},
-                "path" => "/var/log/nginx/access.log",
-                "method" => "GET",
-                "bytes" => "280",
-                "response" => "200",
-                "request" => "/",
-                "host" => "b323ff9ed6aa",
-                "referrer" => "-",
-                "timestamp" => "11/Jun/2021:01:50:15 +0000",
-                "message" => "192.168.176.1 - - [11/Jun/2021:01:50:15 +0000] \"GET / HTTP/1.1\" 200 280 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36\" \"-\"",
-                "@timestamp" => 2021-06-11T01:50:15.823Z,
-                "clientip" => "192.168.176.1"
-            }
-
-        ```
-
-
-
-- elastic에 /web-YYYY.mm.dd 와 /access-YYYY.mm.dd로 로그가 쌓임
-    ```
-    [elastic에서 확인 방법]
-        GET /web-2021.06.11/_search
-        {
-            "query": {
-                "match_all": {}
-            }
-        }
-    ```
+hive 추가
++ 기존 참조 문서에서는 postgresql, mysql ~~-> mariadb로 변경~~
++ hive insert with parquet
 
 
 
@@ -139,17 +63,112 @@ log 셋팅(nginx와 flask의 log를 logstash를 통하여 elastic으로 전송)
 - template import 방법
     - nifi 화면에서 왼쪽 Operate를 통해 [Upload template] 아이콘을 선택 -> 상단 [Template] 메뉴를 통해 upload한 template 중 필요한 template 로드
 
-## hadoop 셋팅
+
+## Hadoop 구성 및 확인
+1. 빌드
+    ```
+    $ chmod u+x build.sh
+    $ ./build.sh
+    ```
+
+2. 서비스 확인 방법
+    + default ports used by hadoop services : https://kontext.tech/column/hadoop/265/default-ports-used-by-hadoop-services-hdfs-mapreduce-yarn
+3. namenode test
+    ```
+    docker exec [container_name] [command]
+    
+    $ docker exec namenode hadoop dfs -ls -R /
+    $ alias hadoop='docker exec namenode hadoop'
+    $ hadoop dfs -mkdir -p /tmp/test/app 
+     WARNING: HADOOP_PREFIX has been replaced by HADOOP_HOME. Using value of HADOOP_PREFIX.
+     mkdir: org.apache.hadoop.hdfs.server.namenode.SafeModeException: Cannot create directory /tmp/test/app. namenode is in safe mode.
+
+    # 위와 같은 이슈 해결방법 - namenode가 safe 모드 설정됨. hadoop 2.9.2부터인가 추가된 기능임
+    # (hdfs-site.xml에서 dfs.replication이 설정되면 safemode가 작동함)
+    $ hadoop dfsadmin -safemode get | enter | leave
+
+    $ hadoop dfs -mkdir -p /tmp/test/app
+    $ hadoop dfs -ls -R /tmp
+    $ hadoop dfs -rm -r /tmp/test/app
+    ```
+4. wordcount test
+
+    참고: http://hadoop.apache.org/docs/r2.7.3/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html#Example:_WordCount_v1.0
+    ```
+    $ hadoop com.sun.tools.javac.Main WordCount.java
+    $ jar cf WordCount.jar WordCount*.class
+
+    # 여러가지 파일을 /tmp/test 밑에 insert 
+    $ hadoop fs -put input.txt /tmp/test/ 
+    $ hadoop jar WordCount.jar WordCount /tmp/test /output
+    ```
+
+
+## Hive 구성 및 확인
+1. 구성
+    + hadoop 3.2.1
+    + hive v3.1.2
+    + metastore mysql ~~mariadb 10.5~~
+    + zookeeper
+
+    참고(postgresql): https://github.com/big-data-europe/docker-hive   
+    
+    참고(mysql): https://github.com/kadensungbincho/de-hands-on/tree/main/docker-hadoop-poc
+
+2. hive 확인 방법
+    ```
+    # 실제 hive에 tmp database가 hdfs에 어떤 위치에 쌓이게 된지 확인
+    $ hadoop dfs -ls /user/hive/warehouse
+      WARNING: Use of this script to execute dfs is deprecated.
+      WARNING: Attempting to execute replacement "hdfs dfs" instead.
+
+      Found 1 items
+      drwxr-xr-x   - root supergroup          0 2021-04-06 00:54 /user/hive/warehouse/tmp2.db
+
+    # 예제가 정상적으로 수행되면 다음과 같이 데이터가 partition
+    $ docker exec namenode hadoop dfs -ls /user/hive/warehouse/tmp2.db/emp_part/
+      WARNING: Use of this script to execute dfs is deprecated.
+      WARNING: Attempting to execute replacement "hdfs dfs" instead.
+
+      Found 2 items
+      drwxr-xr-x   - root supergroup          0 2021-04-06 07:39 /user/hive/warehouse/tmp2.db/emp_part/year=2020
+      drwxr-xr-x   - root supergroup          0 2021-04-06 07:39 /user/hive/warehouse/tmp2.db/emp_part/year=2021
+
+
+    # hive container에서 beeline으로 확인
+    $ hive
+    > show [databases | table in databases] # DATABASES 및 TABLE 확인
+    > show create database tmp; # 실제 데이터베이스가 어떻게 생성되었는지 확인
+    > select * from tmp.hourly_employee;  # 데이터 확인
+    ```
+
+  + 설치시 에러 확인 방법) hive --hiveconf hive.root.logger=DEBUG,console
+
+3. hive 셋팅시, docker-compose로 build할때 오류 처리 방법
+    - 아래와 같이 docker-compose로 할 경우, 해당 디렉토리 + network 지정이 없을 경우 '[디렉토리명]_default'로 네트워크가 잡히면, hive-server에서는 illegal charater in hostname으로 잡힘. 따라서 network name에 _(언더바)가 안나오게 지정해야 함
+    ```
+    Caused by: org.apache.hadoop.hive.metastore.api.MetaException: Got exception: java.net.URISyntaxException Illegal character in hostname at index 37: thrift://hive-metastore.hadoopcluster_default:9083
+        at org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.logAndThrowMetaException(MetaStoreUtils.java:168) ~[hive-exec-3.1.2.jar:3.1.2]
+        at org.apache.hadoop.hive.metastore.HiveMetaStoreClient.resolveUris(HiveMetaStoreClient.java:267) ~[hive-exec-3.1.2.jar:3.1.2]
+        at org.apache.hadoop.hive.metastore.HiveMetaStoreClient.<init>(HiveMetaStoreClient.java:182) ~[hive-exec-3.1.2.jar:3.1.2]
+        at org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient.<init>(SessionHiveMetaStoreClient.java:94) ~[hive-exec-3.1.2.jar:3.1.2]
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:1.8.0_292]
+    ```
+
+
+## hadoop 정보 확인
 - hadoop 정보 확인
     * Namenode: http://<dockerhadoop_IP_address>:9870/dfshealth.html#tab-overview
     * History server: http://<dockerhadoop_IP_address>:8188/applicationhistory
     * Datanode: http://<dockerhadoop_IP_address>:19864/ (~19865,19866)
     * Nodemanager: http://<dockerhadoop_IP_address>:18042/node (~18043, 18044)
     * Resource manager: http://<dockerhadoop_IP_address>:8088/
-- was와 hive-metastore-postgres와 postgres port 충돌이 발생하여, hive-metastore-postgres는 원래 5432로 설정하고, was에서는 5433으로 설정함 
 
 
-# build
+## hadoop과 SimpleWeb 연동
+- docker-compose 내에 network에 명시 만약, 따로 시스템을 구현할 경우 해당 부분 주석 필요
+
+## build
 ```
 ./build.sh [start|stop]
 ```

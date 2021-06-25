@@ -9,10 +9,11 @@ if [ "$1" == "metastore" ]
 then
   # schematool -dbType postgres -initSchema --verbose &&
   # schematool -initSchema -dbType postgres --verbose &&
+  echo "run hive-metastore"
   schematool -initSchema -dbType mysql --verbose &&
   hive --service metastore
 else
-
+  echo "run hiveserver2"
   hadoop fs -mkdir -p    /tmp
   hadoop fs -mkdir -p    /warehouse/tablespace/managed/hive
   hadoop fs -mkdir -p    /warehouse/tablespace/external/hive
@@ -51,13 +52,14 @@ else
           -hiveconf m1_dt="$m1_dt" \
           -hiveconf m2_dt="$m2_dt" \
           -f /opt/dummy_data/tmp.hql
+    echo "done tmp.hql"
 
     hadoop fs -mkdir -p /tmp/emp
     hadoop fs -put /opt/dummy_data/test.csv /tmp/emp/test.csv
     hadoop fs -chmod 777 /tmp/emp/test.csv
 
     hive -f /opt/dummy_data/order.hql
-
+    echo "done order.hql"
   fi
 
   echo "execute the default, which is hiveserver2"
