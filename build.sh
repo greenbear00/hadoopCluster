@@ -15,7 +15,7 @@ else
 
   
   # build hadoop images
-  VERSION=3.1.2
+  VERSION=3.2.1
   HIVE_VERSION=3.1.2
   echo -e "\ndocker build -t hadoop-base:$VERSION base/."
   docker build -t hadoop-base:$VERSION base/.

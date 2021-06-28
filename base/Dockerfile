@@ -58,7 +58,7 @@ RUN curl --insecure -O https://dist.apache.org/repos/dist/release/hadoop/common/
 
 RUN gpg --import KEYS
 
-ENV HADOOP_VERSION 3.1.2
+ENV HADOOP_VERSION 3.2.1
 # ENV HADOOP_URL https://downloads.apache.org/hadoop/common/current/hadoop-$HADOOP_VERSION.tar.gz
 ENV HADOOP_URL https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-${HADOOP_VERSION}.tar.gz
 

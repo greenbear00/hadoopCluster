@@ -1,4 +1,4 @@
-FROM hadoop-base:3.1.2
+FROM hadoop-base:3.2.1
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl -f http://localhost:8088/ || exit 1
 

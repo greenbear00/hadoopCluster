@@ -22,8 +22,8 @@ services:
       - ./nifi_1/flowfile:/opt/nifi/nifi-current/flowfile_repository
       - ./nifi_1/content:/opt/nifi/nifi-current/content_repository
       - ./nifi_1/provenance:/opt/nifi/nifi-current/provenance_repository
-    networks: 
-      - elastic
+    # networks: 
+    #   - elastic
     depends_on: 
       - zookeeper
     healthcheck:
@@ -50,8 +50,8 @@ services:
       - ./nifi_2/flowfile:/opt/nifi/nifi-current/flowfile_repository
       - ./nifi_2/content:/opt/nifi/nifi-current/content_repository
       - ./nifi_2/provenance:/opt/nifi/nifi-current/provenance_repository
-    networks: 
-      - elastic
+    # networks: 
+    #   - elastic
     depends_on: 
       - zookeeper
     healthcheck:
@@ -65,8 +65,8 @@ services:
       - 18080:18080
     container_name: nifi-registry
     # restart: always
-    networks: 
-      - elastic
+    # networks: 
+    #   - elastic
     environment: 
       - LOG_LEVEL=INFO
       - NIFI_REGISTRY_DB_DIR=/opt/nifi-registry/database
@@ -84,12 +84,12 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    networks: 
-      - elastic
+    # networks: 
+    #   - elastic
 
   ### [hadoop] ###
   namenode:
-    image: hadoop-namenode:3.1.2
+    image: hadoop-namenode:3.2.1
     build: namenode
     container_name: namenode
     restart: always
@@ -103,11 +103,11 @@ services:
       - CLUSTER_NAME=test
     env_file:
       - ./hadoop.env
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
   datanode1:
-    image: hadoop-datanode:3.1.2
+    image: hadoop-datanode:3.2.1
     build: datanode
     container_name: datanode1
     restart: always
@@ -119,102 +119,102 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop.env
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
-  # datanode2:
-  #   image: hadoop-datanode:3.1.2
-  #   build: datanode
-  #   container_name: datanode2
-  #   restart: always
-  #   ports:
-  #     - 19865:9864
-  #   volumes:
-  #     - datanode2:/hadoop/dfs/data
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:9870"
-  #   env_file:
-  #     - ./hadoop.env
+  datanode2:
+    image: hadoop-datanode:3.2.1
+    build: datanode
+    container_name: datanode2
+    restart: always
+    ports:
+      - 19865:9864
+    volumes:
+      - datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
   #   networks:
   #     - elastic
 
-  # datanode3:
-  #   image: hadoop-datanode:3.1.2
-  #   build: datanode
-  #   container_name: datanode3
-  #   restart: always
-  #   ports:
-  #     - 19866:9864
-  #   volumes:
-  #     - datanode3:/hadoop/dfs/data
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:9870"
-  #   env_file:
-  #     - ./hadoop.env
+  datanode3:
+    image: hadoop-datanode:3.2.1
+    build: datanode
+    container_name: datanode3
+    restart: always
+    ports:
+      - 19866:9864
+    volumes:
+      - datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
   #   networks:
   #     - elastic
   
   resourcemanager:
-    image: hadoop-resourcemanager:3.1.2
+    image: hadoop-resourcemanager:3.2.1
     build: resourcemanager
     container_name: resourcemanager
     restart: always
     environment:
-      # SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864"
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864"
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864"
+      # SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864"
     ports:
       - 8088:8088
       - 8032:8032
     env_file:
       - ./hadoop.env
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
   nodemanager1:
-    image: hadoop-nodemanager:3.1.2
+    image: hadoop-nodemanager:3.2.1
     container_name: nodemanager1
     build: nodemanager
     restart: always
     environment:
-      # SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 resourcemanager:8088"
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+      # SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 resourcemanager:8088"
     ports:
       - 18042:8042
     env_file:
       - ./hadoop.env
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
-  # nodemanager2:
-  #   image: hadoop-nodemanager:3.1.2
-  #   container_name: nodemanager2
-  #   build: nodemanager
-  #   restart: always
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
-  #   ports:
-  #     - 18043:8042
-  #   env_file:
-  #     - ./hadoop.env
+  nodemanager2:
+    image: hadoop-nodemanager:3.2.1
+    container_name: nodemanager2
+    build: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 18043:8042
+    env_file:
+      - ./hadoop.env
   #   networks:
   #     - elastic
 
-  # nodemanager3:
-  #   image: hadoop-nodemanager:3.1.2
-  #   container_name: nodemanager3
-  #   build: nodemanager
-  #   restart: always
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
-  #   ports:
-  #     - 18044:8042
-  #   env_file:
-  #     - ./hadoop.env
+  nodemanager3:
+    image: hadoop-nodemanager:3.2.1
+    container_name: nodemanager3
+    build: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
+    ports:
+      - 18044:8042
+    env_file:
+      - ./hadoop.env
   #   networks:
   #     - elastic
   
   historyserver:
-    image: hadoop-historyserver:3.1.2
+    image: hadoop-historyserver:3.2.1
     container_name: historyserver
     build: historyserver
     restart: always
@@ -227,8 +227,8 @@ services:
       - historyserver:/hadoop/yarn/timeline
     env_file:
       - ./hadoop.env
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
   ### [hive] ###
   hive-metastore-mysql:
@@ -247,10 +247,10 @@ services:
       - "3306:3306"
     security_opt:
       - seccomp:unconfined
-    networks:
-      - elastic
-    volumes: 
-      - hive-metastore-mysql:/var/lib/mysql
+    # networks:
+    #   - elastic
+    # volumes: 
+    #   - hive-metastore-mysql:/var/lib/mysql
 
   hive-metastore:
     image: hadoop-hive:3.1.2
@@ -266,12 +266,12 @@ services:
     # command: sh -c "./../run.sh metastore"
     command: ['./run.sh', 'metastore']
     environment:
-      # SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-mysql:3306"
-      SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 hive-metastore-mysql:3306"
+      # SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-mysql:3306"
+      SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 hive-metastore-mysql:3306"
     ports:
       - "9083:9083"
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
   hive-server:
     image: hadoop-hive:3.1.2
@@ -290,13 +290,12 @@ services:
       - ./hadoop.env
       - ./hive.env
     environment:
-      # SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 datanode2:9864 datanode3:9864 historyserver:8188 hive-metastore:9083"
-      SERVICE_PRECONDITION: "namenode:9870 namenode:9000 datanode1:9864 historyserver:8188 hive-metastore:9083"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
       DUMMY_DATA: 1
     ports:
       - "10000:10000"
-    networks:
-      - elastic
+    # networks:
+    #   - elastic
 
   # hive-metastore-postgres:
   #   image: postgres
@@ -322,13 +321,15 @@ volumes:
   nifi:
   nifi_1:
   nifi_2:
-  hive-metastore-mysql:
+  # hive-metastore-mysql:
 
 # networks:
 #   default:
 #     external:
 #       name: elastic
 networks:
-  elastic:
-    driver: bridge
-    name: elastic  
+  # elastic:
+  #   driver: bridge
+  #   name: elastic  
+  default:
+    name: hadoop

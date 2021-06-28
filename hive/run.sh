@@ -14,6 +14,7 @@ then
   hive --service metastore
 else
   echo "run hiveserver2"
+  echo "make hadoop directories"
   hadoop fs -mkdir -p    /tmp
   hadoop fs -mkdir -p    /warehouse/tablespace/managed/hive
   hadoop fs -mkdir -p    /warehouse/tablespace/external/hive
@@ -22,6 +23,7 @@ else
   hadoop fs -chmod g+w  /warehouse/tablespace/external/hive
 
   # Add user
+  echo "add hadoop user"
   groupadd hadoop
   useradd -g hadoop hadoop
   hadoop fs -mkdir -p /user/hadoop/
