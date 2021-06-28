@@ -28,6 +28,8 @@ else
   useradd -g hadoop hadoop
   hadoop fs -mkdir -p /user/hadoop/
   hadoop fs -chown -R hadoop:hadoop /user/hadoop
+  hadoop fs -mkdir -p /simple/users
+  hadoop fs -chown -R hadoop:hadoop /simple/users
   hdfs dfsadmin -refreshUserToGroupsMappings
 
   if [ "$DUMMY_DATA" = "1" ]; then

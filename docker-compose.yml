@@ -17,6 +17,7 @@ services:
       - NIFI_ELECTION_MAX_WAIT=1 min
     volumes: 
       - ./nifi/driver:/opt/nifi/nifi-current/driver
+      - ./namenode/conf:/opt/nifi/nifi-current/hadoop_conf
       - ./nifi_1/state:/opt/nifi/nifi-current/state
       - ./nifi_1/db:/opt/nifi/nifi-current/database_repository
       - ./nifi_1/flowfile:/opt/nifi/nifi-current/flowfile_repository
@@ -45,6 +46,7 @@ services:
       - NIFI_ELECTION_MAX_WAIT=1 min
     volumes: 
       - ./nifi/driver:/opt/nifi/nifi-current/driver
+      - ./namenode/conf:/opt/nifi/nifi-current/hadoop_conf
       - ./nifi_2/state:/opt/nifi/nifi-current/state
       - ./nifi_2/db:/opt/nifi/nifi-current/database_repository
       - ./nifi_2/flowfile:/opt/nifi/nifi-current/flowfile_repository
@@ -75,6 +77,7 @@ services:
     volumes:
       - ./nifi/database:/opt/nifi-registry/nifi-registry-current/database
       - ./nifi/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
+      - ./nifi/flow_backup:/opt/nifi-registry/nifi-registry-current/flow_backup
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -98,6 +101,7 @@ services:
       - 9000:9000
     volumes:
       - namenode:/hadoop/dfs/name
+      - ./namenode/conf:/opt/hadoop/etc/hadoop
       - ./tmp:/tmp_test
     environment:
       - CLUSTER_NAME=test
@@ -323,24 +327,6 @@ volumes:
   nifi_2:
   # hive-metastore-mysql:
 
-# # networks:
-# #   default:
-# #     external:
-# #       name: elastic
-# networks:
-#   # elastic:
-#   #   driver: bridge
-#   #   name: elastic  
-#   default:
-#     name: hadoop
-
-# networks:
-#   elastic:
-#     driver: bridge
-#     name: elastic  
-  # default:
-  #   name: hadoop
 networks: 
   hadoop:
     name: hadoop
-    # driver: bridge
