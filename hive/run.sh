@@ -67,5 +67,5 @@ else
   fi
 
   echo "execute the default, which is hiveserver2"
-  hiveserver2  --hiveconf hive.server2.enable.doAs=true --hiveconf hive.root.logger=DEBUG,console
+  hiveserver2  --hiveconf hive.server2.enable.doAs=false --hiveconf hive.root.logger=DEBUG,console
 fi

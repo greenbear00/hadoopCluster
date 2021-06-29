@@ -1,6 +1,5 @@
 --    DB: tmp2
 --        Daily: daily_employee
---        Hourly: hourly_employee
 
 SET hive.exec.dynamic.partition=true;
 
@@ -26,30 +25,6 @@ INSERT INTO TABLE tmp2.daily_employee PARTITION (year=2020, month=04, day=06)
         (2, 'Barney', '20000', 'Berlin');
 
 INSERT INTO TABLE tmp2.daily_employee PARTITION (year=2020, month=04, day=03)
-    VALUES
-        (3, 'Sungbin', '10000', 'Sinsa'),
-        (4, 'Bob', '20000', 'NewYork');
-
-DROP TABLE IF EXISTS tmp2.hourly_employee;
-CREATE TABLE IF NOT EXISTS tmp2.hourly_employee (
-    eid int,
-    name String,
-    salary String,
-    destination String
-)
-COMMENT 'Employee schedule details'
-PARTITIONED BY (year int, month int, day int, hh int)
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY ','
-STORED AS parquet;
-
-
-INSERT INTO TABLE tmp2.hourly_employee PARTITION  (year=2020, month=04, day=03, hh=01)
-    VALUES
-        (1, 'Kaden', '10000', 'Seoul'),
-        (2, 'Barney', '20000', 'Berlin');
-
-INSERT INTO TABLE tmp2.hourly_employee PARTITION  (year=2020, month=04, day=03, hh=02)
     VALUES
         (3, 'Sungbin', '10000', 'Sinsa'),
         (4, 'Bob', '20000', 'NewYork');

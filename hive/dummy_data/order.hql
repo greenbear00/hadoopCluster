@@ -14,17 +14,37 @@ CREATE SCHEMA IF NOT EXISTS simple;
 
 
 
+drop table IF EXISTS users;
+create external table if not exists users (
+    id String,
+    name String,
+    passwd String,
+    cret_dt Timestamp
+) row format delimited 
+fields terminated by ',' 
+stored as textfile 
+location '/simple/users'
+tblproperties ('externaltable.purge'='true',
+"skip.header.line.count"="1");
+-- location 'hdfs://namenode:9000/warehouse/tablespace/external/hive/simple/users' 
 
--- create table users
+
+
+
+-- create managed table users
+-- hdfs://namenode:9000/warehouse/tablespace/managed/hive/simple.db/users
 DROP TABLE IF EXISTS simple.users;
 CREATE TABLE IF NOT EXISTS simple.users (
     id String,
     name String,
     passwd String,
     cret_dt Timestamp
-) clustered by (id) into 10 buckets stored as orc
+) clustered by (id) into 10 buckets 
+row format delimited
+stored as orc
 tblproperties( 
     "transactional"="true",
+    "skip.header.line.count"="1",
     "compactor.mapreduce.map.memory.mb"="2048",
     "compactorthreshold.hive.compactor.delta.num.threshold"="4",
     "compactorthreshold.hive.compactor.delta.pct.threshold"="0.5");

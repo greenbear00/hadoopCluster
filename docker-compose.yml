@@ -17,7 +17,8 @@ services:
       - NIFI_ELECTION_MAX_WAIT=1 min
     volumes: 
       - ./nifi/driver:/opt/nifi/nifi-current/driver
-      - ./namenode/conf:/opt/nifi/nifi-current/hadoop_conf
+      - namenode_conf:/opt/nifi/nifi-current/hadoop_conf
+      - hive_conf:/opt/nifi/nifi-current/hive_conf
       - ./nifi_1/state:/opt/nifi/nifi-current/state
       - ./nifi_1/db:/opt/nifi/nifi-current/database_repository
       - ./nifi_1/flowfile:/opt/nifi/nifi-current/flowfile_repository
@@ -46,7 +47,8 @@ services:
       - NIFI_ELECTION_MAX_WAIT=1 min
     volumes: 
       - ./nifi/driver:/opt/nifi/nifi-current/driver
-      - ./namenode/conf:/opt/nifi/nifi-current/hadoop_conf
+      - namenode_conf:/opt/nifi/nifi-current/hadoop_conf
+      - hive_conf:/opt/nifi/nifi-current/hive_conf
       - ./nifi_2/state:/opt/nifi/nifi-current/state
       - ./nifi_2/db:/opt/nifi/nifi-current/database_repository
       - ./nifi_2/flowfile:/opt/nifi/nifi-current/flowfile_repository
@@ -101,7 +103,7 @@ services:
       - 9000:9000
     volumes:
       - namenode:/hadoop/dfs/name
-      - ./namenode/conf:/opt/hadoop/etc/hadoop
+      - namenode_conf:/opt/hadoop/etc/hadoop
       - ./tmp:/tmp_test
     environment:
       - CLUSTER_NAME=test
@@ -290,6 +292,7 @@ services:
       - hive-metastore
     volumes:
       - ./hive/dummy_data:/opt/dummy_data
+      - hive_conf:/opt/hive/conf
     env_file:
       - ./hadoop.env
       - ./hive.env
@@ -318,6 +321,7 @@ services:
 
 volumes:
   namenode:
+  namenode_conf:
   datanode1:
   # datanode2:
   # datanode3:
@@ -325,7 +329,8 @@ volumes:
   nifi:
   nifi_1:
   nifi_2:
-  # hive-metastore-mysql:
+  hive-metastore-mysql:
+  hive_conf:
 
 networks: 
   hadoop:

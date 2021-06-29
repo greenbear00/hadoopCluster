@@ -1,26 +1,13 @@
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/big-data-europe/Lobby)
 
-# Changes
-
-change from debian:9 to centos:7 (2021.03.30)
-
-datanode(scale out) -> 3 datanode
-+ local test를 위해 dfs.replication=1로 설정
-
-nodemanager(scale out) -> 3 nodemanager
-+ 이슈 발생: local machine의 메모리가 16GB여서 nodemanager의 memory 설정 낮춤
-  + YARN_CONF_yarn_nodemanager_resource_memory___mb=4096
-  + YARN_CONF_yarn_nodemanager_resource_cpu___vcores=4
-  + MAPRED_CONF_mapreduce_map_memory_mb=4096
-10  + MAPRED_CONF_mapreduce_reduce_memory_mb=4096
-
-hive 추가
-+ 기존 참조 문서에서는 postgresql, mysql ~~-> mariadb로 변경~~
-+ hive insert with parquet
+# 변경사항
+- 참조: https://gitter.im/big-data-europe/Lobby
+- debian:9 to centos:7 (2021.03.30)
+- datanode 1개로 구성 (각각 주석 해제하면 3개로 구성됨)
+    + local test를 위해 dfs.replication=1로 설정
+- hive metastore db를 mysql로 변경
 
 
-
-## nifi 적용
+## nifi
 - flask의 DB인 postgres를 nifi를 통하여 hive와 연동 (CRUD)
 - elastic의 로그(nginx, flask)를 hive와 연동
 - nifi 클러스터 적용 및 dashboard 확인
@@ -62,14 +49,13 @@ hive 추가
     - 참고로 sample template는 .nifi/template에 존재
 - template import 방법
     - nifi 화면에서 왼쪽 Operate를 통해 [Upload template] 아이콘을 선택 -> 상단 [Template] 메뉴를 통해 upload한 template 중 필요한 template 로드
+    
+### nifi flow 예제
+- .nifi/flow_backup/rdb_to_hive.xml 파일은 rdb(즉, postgres의 simple.users) 데이터를 가져와서 hdfs -> hive로 insert 함
 
 
-## Hadoop 구성 및 확인
-1. 빌드
-    ```
-    $ chmod u+x build.sh
-    $ ./build.sh
-    ```
+
+## hadoop
 
 2. 서비스 확인 방법
     + default ports used by hadoop services : https://kontext.tech/column/hadoop/265/default-ports-used-by-hadoop-services-hdfs-mapreduce-yarn
@@ -104,7 +90,7 @@ hive 추가
     ```
 
 
-## Hive 구성 및 확인
+## Hive
 1. 구성
     + hadoop 3.2.1
     + hive v3.1.2
@@ -154,6 +140,39 @@ hive 추가
         at org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient.<init>(SessionHiveMetaStoreClient.java:94) ~[hive-exec-3.1.2.jar:3.1.2]
         at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:1.8.0_292]
     ```
+4. beeline으로 접속
+- id,pw는 hive.env에 명시된 hive, hive임
+    ```
+    beeline> !connect jdbc:hive2://localhost:10000/default;auth=noSasl
+    Connecting to jdbc:hive2://localhost:10000/default;auth=noSasl
+    Enter username for jdbc:hive2://localhost:10000/default: hive
+    Enter password for jdbc:hive2://localhost:10000/default: ****
+    Connected to: Apache Hive (version 3.1.2)
+    Driver: Hive JDBC (version 3.1.2)
+    Transaction isolation: TRANSACTION_REPEATABLE_READ
+
+    0: jdbc:hive2://localhost:10000/default> show databases;
+    DEBUG : Acquired the compile lock.
+    INFO  : Compiling command(queryId=root_20210629070337_741aca33-0669-4da5-a1af-043e7596c27f): show databases
+    INFO  : Semantic Analysis Completed (retrial = false)
+    INFO  : Returning Hive schema: Schema(fieldSchemas:[FieldSchema(name:database_name, type:string, comment:from deserializer)], properties:null)
+    INFO  : Completed compiling command(queryId=root_20210629070337_741aca33-0669-4da5-a1af-043e7596c27f); Time taken: 0.031 seconds
+    INFO  : Executing command(queryId=root_20210629070337_741aca33-0669-4da5-a1af-043e7596c27f): show databases
+    INFO  : Starting task [Stage-0:DDL] in serial mode
+    INFO  : Completed executing command(queryId=root_20210629070337_741aca33-0669-4da5-a1af-043e7596c27f); Time taken: 0.009 seconds
+    INFO  : OK
+    DEBUG : Shutting down query show databases
+    +----------------+
+    | database_name  |
+    +----------------+
+    | default        |
+    | simple         |
+    | tmp2           |
+    +----------------+
+    3 rows selected (0.068 seconds)
+
+    ```
+
 
 
 ## hadoop 정보 확인
@@ -168,7 +187,7 @@ hive 추가
 ## hadoop과 SimpleWeb 연동
 - docker-compose 내에 network에 명시 만약, 따로 시스템을 구현할 경우 해당 부분 주석 필요
 
-## build
+# build
 ```
 ./build.sh [start|stop]
 ```
