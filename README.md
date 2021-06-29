@@ -35,11 +35,13 @@
 
     ```
 - nifi postgres 관련
-    - GenerateTableFetch
-        - DBCPConnectionPool
-            - database connection url: jdbc:postgresql://postgres:postgres@postgres:5432/simple
-            - database driver class name: org.postgresql.Driver
-            - database driver location(s): /opt/driver/postgresql-42.2.21.jar
+    - DBCPConnectionPool
+        - database connection url: jdbc:postgresql://postgres:postgres@postgres:5432/simple
+        - database driver class name: org.postgresql.Driver
+        - database driver location(s): /opt/driver/postgresql-42.2.21.jar
+    - HiveConnectionPool
+        - jdbc.url: jdbc:hive2://hive-server:10000/default;auth=noSasl
+        - user_id, passwd: hive, hive
 - nifi-registry 연동
     - nifi Web UI에서 controller settings을 통해 nifi-registry(http://nifi-registry:18080)을 등록해야 함
     - nifi Web UI가 띄워지면, process group을 통해 import 시키면 nifi-registry에 저장된 nifi process group을 import 시킬 수 있음
@@ -51,7 +53,9 @@
     - nifi 화면에서 왼쪽 Operate를 통해 [Upload template] 아이콘을 선택 -> 상단 [Template] 메뉴를 통해 upload한 template 중 필요한 template 로드
     
 ### nifi flow 예제
-- .nifi/flow_backup/rdb_to_hive.xml 파일은 rdb(즉, postgres의 simple.users) 데이터를 가져와서 hdfs -> hive로 insert 함
+- .nifi/flow_backup/rdb_to_hdfs.xml 파일은 rdb(즉, postgres의 simple.users) 데이터를 가져와서 hdfs로 insert 함
+- .nifi/flow_backup/rdb_to_hdfs_to_hive.xml 파일은 rdb->hdfs->hive로 insert 함
+- 참고로 해당 예제들은 중복제거를 안함(테스트로 데이터가 잘 쌓이는지만 본 것이고, 실제 update등을 하려면, modified_dt 등과 같은 수정날짜 기준으로 처리 하는 작업이 있어야 하며, hive insert query에서도 primary key 기준으로 update를 하게끔 해야 함)
 
 
 
